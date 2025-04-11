@@ -3,6 +3,12 @@ import os
 import sys
 from botocore.exceptions import ClientError
 
+def display_banner():
+    print("\n" + "="*65)
+    print("        🚀 Welcome to Sharathchandra's EC2 Script 🚀")
+    print("="*65)
+    print("Automating your AWS EC2 instance creation — the smart way!\n")
+
 def create_key_pair(ec2, key_name):
     try:
         ec2.describe_key_pairs(KeyNames=[key_name])
@@ -50,9 +56,7 @@ def get_ami_id(region, ami_name="amzn2-ami-hvm-*-x86_64-gp2"):
         raise Exception(f"No AMI found for {ami_name} in region {region}")
 
 def main():
-    print("""\n!!! Welcome to HINTechnologies !!!\n
-This script will guide you step-by-step to create an EC2 instance.
-""")
+    display_banner()
 
     # AWS Region
     region_options = {
@@ -91,8 +95,6 @@ This script will guide you step-by-step to create an EC2 instance.
     # AMI ID
     ami_id = input("Enter the AMI ID (default: 'ami-05edb7c94b324f73c'): ").strip() or "ami-05edb7c94b324f73c"
 
-   
-        
     # Storage
     storage_size = input("Enter Storage Size in GB (default: 8): ").strip() or "8"
 
@@ -151,21 +153,23 @@ This script will guide you step-by-step to create an EC2 instance.
             UserData=user_data,
         )
         instance_ids = [instance['InstanceId'] for instance in instances['Instances']]
-        print(f"Successfully launched EC2 instances: {', '.join(instance_ids)}")
+        print(f"✅ Successfully launched EC2 instances: {', '.join(instance_ids)}")
 
         # Tag Instances
         for instance_id, name in zip(instance_ids, instance_names):
             ec2.create_tags(Resources=[instance_id], Tags=[{"Key": "Name", "Value": name}])
-        print("Instances tagged successfully.")
+        print("🏷️  Instances tagged successfully.")
 
         # Fetch Instance Details
         response = ec2.describe_instances(InstanceIds=instance_ids)
         for reservation in response['Reservations']:
             for instance in reservation['Instances']:
-                print(f"Instance ID: {instance['InstanceId']}, Public IP: {instance.get('PublicIpAddress')}")
+                print(f"🔍 Instance ID: {instance['InstanceId']}, Public IP: {instance.get('PublicIpAddress')}")
+
+        print("\n✅ Script execution completed. Powered by Sharathchandra.\n")
 
     except Exception as e:
-        print(f"Error launching instances: {e}")
+        print(f"❌ Error launching instances: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
