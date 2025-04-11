@@ -1,42 +1,54 @@
-import boto3
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+#!/bin/bash
 
-def list_instances():
-    try:
-        # Create an EC2 client
-        ec2 = boto3.client('ec2')
-        
-        # Describe instances
-        response = ec2.describe_instances()
-        
-        # Parse the response to get required instance details
-        print(f"{'Name':<20}{'Instance ID':<20}{'Public IP':<20}{'Private IP':<20}")
-        print("=" * 80)
-        
-        for reservation in response['Reservations']:
-            for instance in reservation['Instances']:
-                # Get instance details
-                instance_id = instance.get('InstanceId', 'N/A')
-                public_ip = instance.get('PublicIpAddress', 'N/A')
-                private_ip = instance.get('PrivateIpAddress', 'N/A')
-                
-                # Get the Name tag if it exists
-                name_tag = 'N/A'
-                if 'Tags' in instance:
-                    for tag in instance['Tags']:
-                        if tag['Key'] == 'Name':
-                            name_tag = tag['Value']
-                            break
-                
-                # Print instance details
-                print(f"{name_tag:<20}{instance_id:<20}{public_ip:<20}{private_ip:<20}")
-    
-    except NoCredentialsError:
-        print("AWS credentials not found. Please configure your credentials.")
-    except PartialCredentialsError:
-        print("Incomplete AWS credentials. Please check your configuration.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+# This script installs Jenkins and its dependencies on Amazon Linux 2
 
-if __name__ == "__main__":
-    list_instances()
+# Step 1: Update the System
+echo "Updating the system..."
+sudo yum update -y
+
+# Step 2: Install Java (Required for Jenkins)
+echo "Installing Java 17 (Amazon Corretto)..."
+sudo yum install java-17-amazon-corretto -y
+
+# Step 3: Verify Java Installation
+echo "Verifying Java Installation..."
+java -version
+
+# Step 4: Download Jenkins GPG Key and Add Jenkins Repository
+echo "Downloading Jenkins GPG key and adding Jenkins repository..."
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+# Step 5: Install Git and Maven
+echo "Installing Git and Maven..."
+sudo yum install -y git maven 
+
+# Step 6: Install Docker
+echo "Installing Docker..."
+sudo yum install -y docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Step 7: Install Jenkins
+echo "Installing Jenkins..."
+sudo yum install -y jenkins
+
+# Step 8: Start Jenkins and Enable it to Start on Boot
+echo "Starting Jenkins service..."
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# Step 9: Show Jenkins Access URL
+echo "Jenkins installation completed. You can access Jenkins at http://<your-ec2-public-ip>:8080"
+
+# Step 10: Display Initial Admin Password
+echo "Displaying Jenkins Initial Admin Password..."
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+# Step 11: Add Jenkins User to Docker Group
+echo "Adding Jenkins user to Docker group..."
+sudo usermod -aG docker jenkins
+
+# Step 12: Restart Jenkins
+echo "Restarting Jenkins..."
+sudo systemctl restart jenkins
